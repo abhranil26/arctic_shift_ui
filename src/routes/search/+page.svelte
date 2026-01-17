@@ -14,6 +14,7 @@
     import { type ContextMenuItem } from "$lib/components/contextMenu/contextMenuTypes";
     import { copyToClipboard } from "$lib/utils";
     import { TextMessages } from "./textMessages";
+    import { apiUrl } from "$lib/const";
 	enum Function {
 		PostsSearch="posts_search",
 		CommentsSearch="comments_search",
@@ -152,8 +153,8 @@
 				["sort", sort],
 				["over_18", over18 != null ? over18.toString() : ""],
 				["spoiler", spoiler != null ? spoiler.toString() : ""],
-				["title", title],
-				["selftext", selftext],
+				["title", (subreddit || author) ? title : ""],
+				["selftext", (subreddit || author) ? selftext : ""],
 				["url", url],
 			];
 		}
@@ -168,7 +169,7 @@
 				["sort", sort],
 				["link_id", linkId],
 				["parent_id", parentId],
-				["body", body],
+				["body", (linkId || parentId || author || subreddit) ? body : ""],
 			];
 		}
 		else {
@@ -190,7 +191,7 @@
 		params.append("md2html", "true");
 		params.append("meta-app", "search-tool");
 		
-		const requestUrl = `https://arctic-shift.photon-reddit.com/api/${endpoint}/search?${params.toString()}`;
+		const requestUrl = `${apiUrl}/api/${endpoint}/search?${params.toString()}`;
 		try {
 			const response = await fetch(requestUrl);
 			let data;
@@ -247,9 +248,9 @@
 		const commentIds = filteredIds.filter(id => id.category == IdCategory.comment).map(id => id.id);
 		const urls: string[] = [];
 		if (postIds.length > 0)
-			urls.push(`https://arctic-shift.photon-reddit.com/api/posts/ids?ids=${postIds.join(",")}&${commonParams.toString()}`);
+			urls.push(`${apiUrl}/api/posts/ids?ids=${postIds.join(",")}&${commonParams.toString()}`);
 		if (commentIds.length > 0)
-			urls.push(`https://arctic-shift.photon-reddit.com/api/comments/ids?ids=${commentIds.join(",")}&${commonParams.toString()}`);
+			urls.push(`${apiUrl}/api/comments/ids?ids=${commentIds.join(",")}&${commonParams.toString()}`);
 		if (urls.length == 0) {
 			error = "No IDs";
 			loading = false;
