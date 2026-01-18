@@ -21,21 +21,21 @@
 		[DownloadType.user]: "User",
 	};
 	let isSupported = !browser || typeof showSaveFilePicker === "function";
-	let downloadType = DownloadType.subreddit;
-	let name = "";
-	let isNameValid = false;
-	let startDate: Date|null = new Date("2005-01-01T00:00:00.000Z");
-	let endDate: Date|null = null;
-	let info: any|null = null;
-	let downloadPosts = true;
-	let downloadComments = true;
-	let archiveStream: CombinedArchiveStream|null = null;
-	let isRunning = false;
-	let stateIsChanging = false;
-	let isDone = false;
-	let isCancelling = false;
+	let downloadType = $state(DownloadType.subreddit);
+	let name = $state("");
+	let isNameValid = $state(false);
+	let startDate: Date|null = $state(new Date("2005-01-01T00:00:00.000Z"));
+	let endDate: Date|null = $state(null);
+	let info: any|null = $state(null);
+	let downloadPosts = $state(true);
+	let downloadComments = $state(true);
+	let archiveStream: CombinedArchiveStream|null = $state(null);
+	let isRunning = $state(false);
+	let stateIsChanging = $state(false);
+	let isDone = $state(false);
+	let isCancelling = $state(false);
 
-	let error: string|null = null;
+	let error: string|null = $state(null);
 	function onError(e: Error) {
 		console.error(e);
 		error = e.message;
@@ -55,6 +55,7 @@
 		const newDate = new Date(Date.parse(data.data) - 1);
 		newDate.setHours(0, 0, 0, 0);
 		startDate = newDate;
+		info = null;
 		isNameValid = true;
 
 		let infoFetchUrl: string;
@@ -191,9 +192,12 @@
 				onChange={() => name.length > 2 && loadStartDate()}
 			/>
 			<TextField
-				bind:text={name}
-				onChange={loadStartDate}
-				on:input={() => isNameValid = false}
+				text={name}
+				onChange={(newName) => {
+					name = newName;
+					isNameValid = false;
+					loadStartDate();
+				}}
 				placeholder={`${downloadTypeNames[downloadType]} name`}
 			/>
 			{#if isNameValid && info}
@@ -247,38 +251,38 @@
 			{#if archiveStream === null}
 				<button
 					class="main-action primary"
-					on:click={start}
+					onclick={start}
 					disabled={!isSupported || !isNameValid}
 				>Start</button>
 			{:else if isDone}
 				{#if archiveStream.posts?.hasError || archiveStream.comments?.hasError}
 					<button
 						class="main-action primary"
-						on:click={tryAgain}
+						onclick={tryAgain}
 						disabled={isCancelling || stateIsChanging}
 					>Try again</button>
 				{/if}
 				<button
 					class="main-action primary"
-					on:click={reset}
+					onclick={reset}
 				>New download</button>
 			{:else}
 				{#if isRunning}
 					<button
 						class="main-action primary"
-						on:click={pause}
+						onclick={pause}
 						disabled={isCancelling || stateIsChanging}
 					>Pause</button>
 				{:else}
 					<button
 						class="main-action primary"
-						on:click={resume}
+						onclick={resume}
 						disabled={isCancelling || stateIsChanging}
 					>Resume</button>
 				{/if}
 				<button
 					class="main-action secondary"
-					on:click={cancel}
+					onclick={cancel}
 					disabled={isCancelling || stateIsChanging}
 				>Cancel</button>
 				{/if}

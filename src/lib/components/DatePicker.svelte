@@ -3,10 +3,19 @@
 	import type { DateState } from "$lib/components/datePickerTypes";
 	import TextField from "./TextField.svelte";
 
-	export let label: string;
-	export let onChange: (date: Date|null) => void;
-	export let allowNow: boolean;
-	export let date: Date|null;
+	interface Props {
+		label: string;
+		onChange: (date: Date|null) => void;
+		allowNow: boolean;
+		date: Date|null;
+	}
+
+	let {
+		label,
+		onChange,
+		allowNow,
+		date
+	}: Props = $props();
 
 
 	function getError(text: string): string|null {

@@ -13,11 +13,11 @@
 	enum SubPage {
 		global, subreddits
 	}
-	let currentSubPage: SubPage = SubPage.global;
-	let alreadyViewedPages: SubPage[] = [currentSubPage];
+	let currentSubPage: SubPage = $state(SubPage.global);
+	let alreadyViewedPages: SubPage[] = $state([SubPage.global]);
 
-	let subredditSelectorIds: number[] = [0];
-	let nextSubredditSelectorId = 1;
+	let subredditSelectorIds: number[] = $state([0]);
+	let nextSubredditSelectorId = $state(1);
 </script>
 
 <svelte:head>
@@ -112,7 +112,7 @@
 			{/each}
 			<button
 				class="add-subreddit-button"
-				on:click={() => {
+				onclick={() => {
 					subredditSelectorIds = [...subredditSelectorIds, nextSubredditSelectorId];
 					nextSubredditSelectorId++;
 				}}

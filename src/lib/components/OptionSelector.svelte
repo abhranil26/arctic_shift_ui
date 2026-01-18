@@ -3,14 +3,27 @@
 		value: T;
 		label: string;
 	}
-	export let options: Option<any>[];
-	export let selected: any|null = null;
-	export let onChange: ((selected: any) => void)|undefined = undefined;
-	export let label: string = "";
-	export let canDeselect: boolean = false;
-	export let expand: boolean = false;
-	export let column = true;
-	export let stretchRow = true;
+	interface Props {
+		options: Option<any>[];
+		selected?: any|null;
+		onChange?: ((selected: any) => void)|undefined;
+		label?: string;
+		canDeselect?: boolean;
+		expand?: boolean;
+		column?: boolean;
+		stretchRow?: boolean;
+	}
+
+	let {
+		options,
+		selected = $bindable(null),
+		onChange = undefined,
+		label = "",
+		canDeselect = false,
+		expand = false,
+		column = true,
+		stretchRow = true
+	}: Props = $props();
 
 	function select(option: Option<any>) {
 		selected = option.value;
@@ -43,7 +56,7 @@
 			<button
 				class="option"
 				class:selected={selected === option.value}
-				on:click={canDeselect && option.value === selected ? deselect : () => select(option)}
+				onclick={canDeselect && option.value === selected ? deselect : () => select(option)}
 			>{option.label}</button>
 		{/each}
 	</div>

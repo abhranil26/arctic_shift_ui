@@ -2,20 +2,30 @@
 	import { createEventDispatcher, onMount } from "svelte";
 	import type { ContextMenuItem } from "./contextMenuTypes";
 
-	export let items: ContextMenuItem[];
-	export let x: number;
-	export let y: number;
-	export let visible: boolean = true;
+	interface Props {
+		items: ContextMenuItem[];
+		x: number;
+		y: number;
+		visible?: boolean;
+	}
+
+	let {
+		items,
+		x,
+		y,
+		visible = true
+	}: Props = $props();
 
 	const dispatch = createEventDispatcher();
 
-	let menuElement: HTMLDivElement;
-	let adjustedX = x;
-	let adjustedY = y;
+	let menuElement: HTMLDivElement|undefined = $state();
+	let adjustedX = $state(0);
+	let adjustedY = $state(0);
 
-	$: updatePosition();
 
 	onMount(() => {
+		adjustedX = x;
+		adjustedY = y;
 		updatePosition();
 	});
 
@@ -53,9 +63,12 @@
 			dispatch('close');
 		}
 	}
+	$effect(() => {
+		updatePosition();
+	});
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
+<svelte:window onkeydown={handleKeydown} />
 
 {#if visible && items.length > 0}
 	<div
@@ -70,7 +83,7 @@
 				<button
 					class="menu-item"
 					class:disabled={item.disabled}
-					on:click={() => handleItemClick(item)}
+					onclick={() => handleItemClick(item)}
 					disabled={item.disabled}
 				>
 					{item.label}

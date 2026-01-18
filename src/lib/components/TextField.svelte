@@ -1,20 +1,37 @@
 <script lang="ts">
 	import "$lib/default.scss";
 	
-	export let text: string;
-	export let label: string = "";
-	export let placeholder: string = "";
-	export let type: string = "text";
-	export let min: string = "";
-	export let max: string = "";
-	export let simpleDesign: boolean = false;
-	export let width: string|null = null;
-	export let transform: ((text: string) => string)|null = null;
-	export let getError: (text: string) => string|null = () => null;
-	export let onChange: ((text: string) => void)|null = null;
-	export let onEnter: (() => void)|null = null;
+	interface Props {
+		text: string;
+		label?: string;
+		placeholder?: string;
+		type?: string;
+		min?: string;
+		max?: string;
+		simpleDesign?: boolean;
+		width?: string|null;
+		transform?: ((text: string) => string)|null;
+		getError?: (text: string) => string|null;
+		onChange?: ((text: string) => void)|null;
+		onEnter?: (() => void)|null;
+	}
 
-	let error: string|null = null;
+	let {
+		text = $bindable(),
+		label = "",
+		placeholder = "",
+		type = "text",
+		min = "",
+		max = "",
+		simpleDesign = false,
+		width = null,
+		transform = null,
+		getError = () => null,
+		onChange = null,
+		onEnter = null
+	}: Props = $props();
+
+	let error: string|null = $state(null);
 
 	function onTextChange(e: Event) {
 		const target = e.target as HTMLInputElement;
@@ -58,8 +75,8 @@
 			placeholder={placeholder}
 			min={min}
 			max={max}
-			on:change={onTextChange}
-			on:keypress={onEnter ? onKeyPress : undefined}
+			onchange={onTextChange}
+			onkeypress={onEnter ? onKeyPress : undefined}
 		/>
 		<div
 			class="error"

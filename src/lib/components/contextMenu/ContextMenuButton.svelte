@@ -2,9 +2,13 @@
 	import type { ContextMenuItem } from "./contextMenuTypes";
 	import kebabIcon from "$lib/images/kebab.svg";
 
-	export let items: ContextMenuItem[];
-	export let disabled: boolean = false;
-	export let className: string = "";
+	interface Props {
+		items: ContextMenuItem[];
+		disabled?: boolean;
+		className?: string;
+	}
+
+	let { items, disabled = false, className = "" }: Props = $props();
 
 	function handleClick(event: MouseEvent) {
 		if (disabled || items.length === 0) return;
@@ -28,7 +32,7 @@
 <button
 	class="context-menu-button {className}"
 	class:disabled
-	on:click={handleClick}
+	onclick={handleClick}
 	{disabled}
 >
 	<img src={kebabIcon} alt="More options" />

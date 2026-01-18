@@ -6,34 +6,52 @@
 	import { deepCopy, editableTimeStrToMs, isJsonEqual, isOnScreen, lerp, numberToShort, throttle, timeMsToEditableTimeStr } from "$lib/utils";
 	import { type Precision, type TimeSeriesData, TimeSeriesDataFetcher } from "./TimeSeriesDataFetcher";
 	import TextField from "$lib/components/TextField.svelte";
+    import type { Notifier } from "$lib/notifier";
 
-	export let title: string = "";
-	export let apiPathKeys: ([string]|[string, string])[];
-	export let axisLabels: string[] = [];
-	export let seriesLabels: string[] = [];
-	export let colors: string[] = apiPathKeys.map((_, i) => d3.schemeCategory10[i]);
-	export let range = 1000 * 60 * 60 * 24 * 0.5;
-	export let minPrecision: Precision = "minute";
-	export let updateInterval = 0;
-	export let dataFetcher: TimeSeriesDataFetcher;
-	export let numberFormatter: (n: number) => string = (n) => n.toString();
+	interface Props {
+		title?: string;
+		apiPathKeys: ([string]|[string, string])[];
+		axisLabels?: string[];
+		seriesLabels?: string[];
+		colors?: string[];
+		range?: any;
+		minPrecision?: Precision;
+		updateInterval?: number;
+		dataFetcher: TimeSeriesDataFetcher;
+		numberFormatter?: (n: number) => string;
+	}
+
+	let {
+		title = "",
+		apiPathKeys,
+		axisLabels = [],
+		seriesLabels = [],
+		colors = apiPathKeys.map((_, i) => d3.schemeCategory10[i]),
+		range = $bindable(1000 * 60 * 60 * 24 * 0.5),
+		minPrecision = "minute",
+		updateInterval = 0,
+		dataFetcher,
+		numberFormatter = (n) => n.toString()
+	}: Props = $props();
 	
-	let lastApiPathKeys: ([string]|[string, string])[] = deepCopy(apiPathKeys);
+	let lastApiPathKeys: ([string]|[string, string])[] = [];
+	let dataFetcherGroupId: number;
+	let dataStream: Notifier<TimeSeriesData[]>;
 	let updateIntervalId: number = 0;
 	let lastUpdateAt: number = 0;
 	
 	let data: TimeSeriesData[] = [];
-	let rangeEnd: Date|null = null;
+	let rangeEnd: Date|null = $state(null);
 	
 	let isDragging = false;
 	let lastClientX = 0;
 	let lastWidth = 0;
 	let hasPendingWidthUpdate = false;
 	
-	let chartContainer: SVGSVGElement;
+	let chartContainer: SVGSVGElement|undefined = $state();
 	const height = 300;
 	const padding = {top: 15, right: 47, bottom: 20, left: 49};
-	const hasRightAxis = apiPathKeys.length > 1;
+	const hasRightAxis = $derived(apiPathKeys.length > 1);
 	let hasInitialized = false;
 	let xAxisScale: d3.ScaleTime<number, number>;
 	let xAxis: d3.Axis<Date | d3.NumberValue>;
@@ -45,17 +63,7 @@
 	let yAxisRight: d3.Axis<number | d3.NumberValue>|null = null;
 	let axisRightGroup: d3.Selection<SVGGElement, unknown, null, undefined>|null = null;
 	let linesGroup: d3.Selection<SVGGElement, unknown, null, undefined>;
-	
-	let [dataFetcherGroupId, dataStream] = dataFetcher.newGroup(apiPathKeys);
 
-	$: {
-		if (!isJsonEqual(apiPathKeys, lastApiPathKeys)) {
-			lastApiPathKeys = deepCopy(apiPathKeys);
-			disposeDataStream();
-			[dataFetcherGroupId, dataStream] = dataFetcher.newGroup(apiPathKeys);
-			initializeDataStream();
-		}
-	}
 
 	function initializeChart() {
 		if (hasInitialized)
@@ -307,6 +315,8 @@
 	}
 
 	function isEventOutsideChart(e: any): boolean {
+		if (!chartContainer)
+			return true;
 		const absX = e.clientX || e.touches[0].clientX;
 		const absY = e.clientY || e.touches[0].clientY;
 		const rect = chartContainer.getBoundingClientRect();
@@ -344,7 +354,7 @@
 	}
 
 	function onDrag(e: any) {
-		if (!isDragging)
+		if (!isDragging || !chartContainer)
 			return;
 		const clientX = e.clientX || e.touches[0].clientX;
 		const deltaX = clientX - lastClientX;
@@ -381,7 +391,9 @@
 	}
 
 	function onWindowResize() {
-		const newWidth = chartContainer.parentElement!.clientWidth;
+		if (!chartContainer?.parentElement)
+			return;
+		const newWidth = chartContainer.parentElement.clientWidth;
 		if (newWidth === lastWidth)
 			return;
 		if (newWidth === 0) {
@@ -433,7 +445,7 @@
 			precision: "minute",
 			points: [],
 		}));
-		dataStream.addListener(series => {
+		dataStream.addListener((series: TimeSeriesData[]) => {
 			if (currentId !== dataFetcherGroupId)
 				return;
 			lastUpdateAt = Date.now();
@@ -450,6 +462,10 @@
 	}
 
 	onMount(() => {
+		// Initialize data stream from props
+		lastApiPathKeys = deepCopy(apiPathKeys);
+		[dataFetcherGroupId, dataStream] = dataFetcher.newGroup(apiPathKeys);
+		
 		initializeDataStream();
 		if (updateInterval > 0) {
 			updateIntervalId = setInterval(() => {
@@ -468,11 +484,19 @@
 		disposeDataStream();
 		clearInterval(updateIntervalId);
 	});
+	$effect(() => {
+		if (!isJsonEqual(apiPathKeys, lastApiPathKeys)) {
+			lastApiPathKeys = deepCopy(apiPathKeys);
+			disposeDataStream();
+			[dataFetcherGroupId, dataStream] = dataFetcher.newGroup(apiPathKeys);
+			initializeDataStream();
+		}
+	});
 </script>
 
 <svelte:window
-	on:resize={onWindowResize}
-	on:focus={onWindowFocus}
+	onresize={onWindowResize}
+	onfocus={onWindowFocus}
 />
 
 <div class="chart">
@@ -481,17 +505,17 @@
 			{title}
 		</div>
 	{/if}
-	<!-- svelte-ignore a11y-no-static-element-interactions -->
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<svg
 		bind:this={chartContainer}
-		on:mousemove={onDrag}
-		on:mousedown={onDragStart}
-		on:mouseup={onDragEnd}
-		on:mouseleave={onDragEnd}
-		on:touchstart={onDragStart}
-		on:touchend={onDragEnd}
-		on:touchmove={onDrag}
-		on:wheel={onScroll}
+		onmousemove={onDrag}
+		onmousedown={onDragStart}
+		onmouseup={onDragEnd}
+		onmouseleave={onDragEnd}
+		ontouchstart={onDragStart}
+		ontouchend={onDragEnd}
+		ontouchmove={onDrag}
+		onwheel={onScroll}
 	/>
 	<div class="chart-below">
 		<div class="date-range">

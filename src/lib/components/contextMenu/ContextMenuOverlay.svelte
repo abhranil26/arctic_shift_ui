@@ -4,12 +4,18 @@
 	import type { ContextMenuEventDetail } from "./contextMenuTypes";
     import { browser } from "$app/environment";
 
-	let contextMenuVisible = false;
-	let contextMenuItems: ContextMenuEventDetail["items"] = [];
-	let contextMenuX = 0;
-	let contextMenuY = 0;
-	let contextId = 0;
-	let overlayElement: HTMLDivElement;
+	interface Props {
+		children?: import('svelte').Snippet;
+	}
+
+	let { children }: Props = $props();
+
+	let contextMenuVisible = $state(false);
+	let contextMenuItems: ContextMenuEventDetail["items"] = $state([]);
+	let contextMenuX = $state(0);
+	let contextMenuY = $state(0);
+	let contextId = $state(0);
+	let overlayElement: HTMLDivElement|undefined = $state();
 
 	onMount(() => {
 		if (!browser)
@@ -38,10 +44,10 @@
 </script>
 
 <div bind:this={overlayElement} class="context-menu-overlay">
-	<slot />
+	{@render children?.()}
 	
 	{#if contextMenuVisible}
-		<div class="modal-backdrop" on:pointerdown={closeContextMenu} on:wheel={closeContextMenu} role="presentation"></div>
+		<div class="modal-backdrop" onpointerdown={closeContextMenu} onwheel={closeContextMenu} role="presentation"></div>
 
 		{#key `${contextId}`}
 			<ContextMenu

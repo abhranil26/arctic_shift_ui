@@ -2,34 +2,34 @@
 	import type { RedditPostData } from "$lib/redditTypes";
 	import { blurNsfw } from "../searchPreferences";
 
-	export let data: RedditPostData;
+	interface Props {
+		data: RedditPostData;
+	}
+
+	let { data }: Props = $props();
 	
-	let nsfw = data.over_18;
-	$: blur = nsfw && $blurNsfw;
+	const nsfw = $derived(data.over_18);
+	let blur = $derived(nsfw && $blurNsfw);
 	let hasTriedPreviewFull = false;
-	let imgUrl: string = "";
-	if (data.preview?.images[0]) {
-		const image = data.preview.images[0];
-		if (image.resolutions.length > 0) {
-			const targetRes = 750 * 750;
-			for (const res of image.resolutions) {
-				if (res.width * res.height > targetRes) {
-					imgUrl = res.url;
-					break;
+	let imgUrl: string = $state((() => {
+		if (data.preview?.images[0]) {
+			const image = data.preview.images[0];
+			if (image.resolutions.length > 0) {
+				const targetRes = 750 * 750;
+				for (const res of image.resolutions) {
+					if (res.width * res.height > targetRes) {
+						return res.url;
+					}
 				}
+				return image.resolutions[image.resolutions.length - 1].url;
 			}
-			if (!imgUrl) {
-				imgUrl = image.resolutions[image.resolutions.length - 1].url;
+			else {
+				hasTriedPreviewFull = true;
+				return image.source.url;
 			}
 		}
-		else {
-			imgUrl = image.source.url;
-			hasTriedPreviewFull = true;
-		}
-	}
-	if (!imgUrl) {
-		console.log("No preview");
-	}
+		return "";
+	})());
 
 	function onImageError() {
 		if (!hasTriedPreviewFull && data.preview?.images[0]) {
@@ -51,11 +51,11 @@
 	<img
 		src={imgUrl}
 		class:blur
-		on:error={onImageError}
+		onerror={onImageError}
 		alt="preview"
 	/>
 	{#if blur}
-		<button class="blur-button" on:click={() => blur = false}>Show NSFW</button>
+		<button class="blur-button" onclick={() => blur = false}>Show NSFW</button>
 	{/if}
 </div>
 

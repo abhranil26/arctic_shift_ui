@@ -2,7 +2,11 @@
 	import { timePassedSince } from "$lib/utils";
 	import { DateDisplay, dateDisplay } from "./searchPreferences";
 
-	export let date: Date;
+	interface Props {
+		date: Date;
+	}
+
+	let { date }: Props = $props();
 </script>
 
 {#if $dateDisplay === DateDisplay.utc}

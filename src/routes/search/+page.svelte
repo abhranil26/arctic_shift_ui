@@ -15,6 +15,7 @@
     import { copyToClipboard } from "$lib/utils";
     import { TextMessages } from "./textMessages";
     import { apiUrl } from "$lib/const";
+    import { replaceState } from "$app/navigation";
 	enum Function {
 		PostsSearch="posts_search",
 		CommentsSearch="comments_search",
@@ -23,44 +24,48 @@
 
 	type RedditData = RedditPostData|RedditCommentData;
 
-	let fun = Function.PostsSearch;
+	let fun = $state(Function.PostsSearch);
 	// post and comment search parameters
-	let subreddit = "";
-	let author = "";
-	let after = "";
-	let before = "";
-	let limit = "10";
-	let sort: "asc"|"desc" = "desc";
+	let subreddit = $state("");
+	let author = $state("");
+	let after = $state("");
+	let before = $state("");
+	let limit = $state("10");
+	let sort: "asc"|"desc" = $state("desc");
 	// post search parameters
-	let over18: boolean|null = null;
-	let spoiler: boolean|null = null;
-	let title = ""
-	let selftext = ""
-	let url = "";
+	let over18: boolean|null = $state(null);
+	let spoiler: boolean|null = $state(null);
+	let title = $state("")
+	let selftext = $state("")
+	let url = $state("");
 	// comment search parameters
-	let linkId = "";
-	let parentId = "";
-	let body = "";
+	let linkId = $state("");
+	let parentId = $state("");
+	let body = $state("");
 	// id search parameters
-	let ids = [new IdInput(IdCategory.post, "")];
+	let ids = $state([new IdInput(IdCategory.post, "")]);
 	
-	$: hasEnteredRedditUrl = /https:\/\/(\w+\.)?reddit\.com\//.test(url);
-	$: hasFtsParameter = title.length > 0 || selftext.length > 0 || body.length > 0;
+	const hasEnteredRedditUrl = $derived(/https:\/\/(\w+\.)?reddit\.com\//.test(url));
+	const hasFtsParameter = $derived(title.length > 0 || selftext.length > 0 || body.length > 0);
+	
+	// Derived conditions for when FTS fields are enabled
+	const postFtsEnabled = $derived(subreddit.length > 0 || author.length > 0);
+	const commentFtsEnabled = $derived(linkId.length > 0 || parentId.length > 0 || author.length > 0 || subreddit.length > 0);
 
-	let showSettings = false;
+	let showSettings = $state(false);
 
-	let loading = false;
-	let hasReachedEnd = false;
-	let error: string|null = null;
-	let posts: RedditPostData[]|null = null;
-	let comments: RedditCommentData[]|null = null;
-	let idResults: RedditData[]|null = null;
-	$: currentData = {
+	let loading = $state(false);
+	let hasReachedEnd = $state(false);
+	let error: string|null = $state(null);
+	let posts = $state<RedditPostData[]|null>(null);
+	let comments = $state<RedditCommentData[]|null>(null);
+	let idResults = $state<RedditData[]|null>(null);
+	const currentData = $derived({
 		[Function.PostsSearch]: posts,
 		[Function.CommentsSearch]: comments,
 		[Function.Ids]: idResults,
-	}[fun];
-	let previousHistory: string[] = [];
+	}[fun]);
+	let previousHistory: string[] = $state([]);
 
 	onMount(() => {
 		const params = new URLSearchParams(location.search);
@@ -153,8 +158,8 @@
 				["sort", sort],
 				["over_18", over18 != null ? over18.toString() : ""],
 				["spoiler", spoiler != null ? spoiler.toString() : ""],
-				["title", (subreddit || author) ? title : ""],
-				["selftext", (subreddit || author) ? selftext : ""],
+				["title", postFtsEnabled ? title : ""],
+				["selftext", postFtsEnabled ? selftext : ""],
 				["url", url],
 			];
 		}
@@ -169,7 +174,7 @@
 				["sort", sort],
 				["link_id", linkId],
 				["parent_id", parentId],
-				["body", (linkId || parentId || author || subreddit) ? body : ""],
+				["body", commentFtsEnabled ? body : ""],
 			];
 		}
 		else {
@@ -187,7 +192,7 @@
 			ownUrlParams.append(name, value);
 		const newOwnUrl = new URL(location.href);
 		newOwnUrl.search = ownUrlParams.toString();
-		history.replaceState(null, "", newOwnUrl.toString());
+		replaceState(newOwnUrl.toString(), {});
 		params.append("md2html", "true");
 		params.append("meta-app", "search-tool");
 		
@@ -239,7 +244,7 @@
 		ownUrlParams.append("ids", filteredIds.map(id => id.toIdString()).join(","));
 		const newOwnUrl = new URL(location.href);
 		newOwnUrl.search = ownUrlParams.toString();
-		history.replaceState(null, "", newOwnUrl.toString());
+		replaceState(newOwnUrl.toString(), {});
 		
 		const commonParams = new URLSearchParams();
 		commonParams.append("md2html", "true");
@@ -504,7 +509,7 @@
 		{#if fun === Function.PostsSearch}
 			<div
 				class="row"
-				class:disabled-row={author.length == 0 && subreddit.length == 0}
+				class:disabled-row={!postFtsEnabled}
 			>
 				<TextField
 					bind:text={title}
@@ -566,7 +571,7 @@
 			</div>
 			<div
 				class="row"
-				class:disabled-row={linkId.length == 0 && parentId.length == 0 && author.length == 0 && subreddit.length == 0}
+				class:disabled-row={!commentFtsEnabled}
 			>
 				<TextField
 					bind:text={body}
@@ -591,7 +596,8 @@
 			{/each}
 			<button
 				class="add-button transparent-button"
-				on:click={() => {
+				aria-label="Add ID"
+				onclick={() => {
 					ids.push(new IdInput(IdCategory.post, ""));
 					ids = [...ids];
 				}}
@@ -604,20 +610,20 @@
 			<div class="error">{error || ""}</div>
 			<button
 				class="settings-button"
-				on:click={() => showSettings = !showSettings}
+				onclick={() => showSettings = !showSettings}
 			>
 				<img src={settingsSvg} alt="settings" />
 			</button>
 			{#if fun === Function.PostsSearch && posts?.length || fun === Function.CommentsSearch && comments?.length || fun === Function.Ids && idResults?.length}
 				<button
 					class="submit-button secondary"
-					on:click={download}
+					onclick={download}
 				>Download</button>
 			{/if}
 			<button
 				class="submit-button"
 				disabled={loading}
-				on:click={search}
+				onclick={search}
 			>Search</button>
 		</div>
 		{#if error && error.toLowerCase().includes("timeout")}
@@ -634,12 +640,12 @@
 			<button
 				class="submit-button"
 				disabled={loading || previousHistory.length == 0}
-				on:click={searchPrevious}
+				onclick={searchPrevious}
 			>Previous</button>
 			<button
 				class="submit-button"
 				disabled={loading || hasReachedEnd}
-				on:click={searchNext}
+				onclick={searchNext}
 			>Next</button>
 		</div>
 	{/if}
@@ -680,12 +686,12 @@
 			<button
 				class="submit-button"
 				disabled={loading || previousHistory.length == 0}
-				on:click={searchPrevious}
+				onclick={searchPrevious}
 			>Previous</button>
 			<button
 				class="submit-button"
 				disabled={loading || hasReachedEnd}
-				on:click={searchNext}
+				onclick={searchNext}
 			>Next</button>
 		</div>
 	{/if}

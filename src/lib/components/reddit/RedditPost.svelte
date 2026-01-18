@@ -6,8 +6,12 @@
 	import DateDisplay from "../DateDisplay.svelte";
 	import RedditImagePreview from "./RedditImagePreview.svelte";
 
-	export let data: RedditPostData;
-	export let contextMenuItems: ContextMenuItem[];
+	interface Props {
+		data: RedditPostData;
+		contextMenuItems: ContextMenuItem[];
+	}
+
+	let { data, contextMenuItems }: Props = $props();
 </script>
 
 <div class="pane">

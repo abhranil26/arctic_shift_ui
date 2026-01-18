@@ -4,19 +4,29 @@
 	import { formatDurationHHMMSS, roundTo } from "$lib/utils";
 	import { onDestroy, onMount } from "svelte";
 
-	export let name: string;
-	export let archiveStream: ArchiveStream<any>;
-	export let endDate: Date|null;
+	interface Props {
+		name: string;
+		archiveStream: ArchiveStream<any>;
+		endDate: Date|null;
+	}
 
-	let downloadedThings = 0;
-	let currentDate = archiveStream.currentDate;
-	let isRunning = archiveStream.isRunning;
-	let isDone = archiveStream.isDone;
-	let hasError = archiveStream.hasError;
-	let runTime = 0;
+	let { name, archiveStream, endDate }: Props = $props();
+
+	let downloadedThings = $state(0);
+	let currentDate = $state(0);
+	let isRunning = $state(false);
+	let isDone = $state(false);
+	let hasError = $state(false);
+	let runTime = $state(0);
 	let updateInterval: number|null = null;
 
 	onMount(() => {
+		// Initialize state from props
+		currentDate = archiveStream.currentDate;
+		isRunning = archiveStream.isRunning;
+		isDone = archiveStream.isDone;
+		hasError = archiveStream.hasError;
+		
 		archiveStream.onStateChange.addListener(onStateChange);
 		archiveStream.onNewData.addListener(onNewData);
 		setInterval(onTick, 1000);

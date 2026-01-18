@@ -7,7 +7,11 @@
 	import TimeSeriesChart from "./TimeSeriesChart.svelte";
 	import { TimeSeriesDataFetcher } from "./TimeSeriesDataFetcher";
 
-	export let dataFetcher: TimeSeriesDataFetcher;
+	interface Props {
+		dataFetcher: TimeSeriesDataFetcher;
+	}
+
+	let { dataFetcher }: Props = $props();
 
 	enum Category {
 		total, total_score, avg_score, subscribers
@@ -55,14 +59,14 @@
 		[Category.subscribers]: numberToShort,
 	}
 
-	let subreddit: string = "AskReddit";
-	let category: Category = Category.total;
-	$: apiPathKeys = categoryToKeys[category].map(keys => keys.map(key => `r/${subreddit}/${key}`) as ([string]|[string, string]));
-	$: title = `r/${subreddit} ${categoryToTitle[category]}`;
-	$: axisLabels = categoryToAxisLabels[category];
-	$: seriesLabels = categoryToSeriesLabels[category];
-	$: range = 1000 * 60 * 60 * 24 * 365 * categoryToYearRange[category];
-	$: numberFormatter = categoryToNumberFormatter[category];
+	let subreddit: string = $state("AskReddit");
+	let category: Category = $state(Category.total);
+	const apiPathKeys = $derived(categoryToKeys[category].map(keys => keys.map(key => `r/${subreddit}/${key}`) as ([string]|[string, string])));
+	const title = $derived(`r/${subreddit} ${categoryToTitle[category]}`);
+	const axisLabels = $derived(categoryToAxisLabels[category]);
+	const seriesLabels = $derived(categoryToSeriesLabels[category]);
+	const range = $derived(1000 * 60 * 60 * 24 * 365 * categoryToYearRange[category]);
+	const numberFormatter = $derived(categoryToNumberFormatter[category]);
 </script>
 
 <div>

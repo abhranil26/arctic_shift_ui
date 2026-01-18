@@ -5,8 +5,12 @@
     import { type ContextMenuItem } from "../contextMenu/contextMenuTypes";
 	import DateDisplay from "../DateDisplay.svelte";
 
-	export let data: RedditCommentData;
-	export let contextMenuItems: ContextMenuItem[];
+	interface Props {
+		data: RedditCommentData;
+		contextMenuItems: ContextMenuItem[];
+	}
+
+	let { data, contextMenuItems }: Props = $props();
 </script>
 
 <div class="pane">

@@ -4,9 +4,13 @@
 	import OptionSelector from "$lib/components/OptionSelector.svelte";
 	import { IdCategory, IdInput } from "./IdInput";
 
-	export let id: IdInput;
-	export let onChange: ((ids: IdInput[]) => void);
-	export let onRemove: (() => void)|null = null;
+	interface Props {
+		id: IdInput;
+		onChange: ((ids: IdInput[]) => void);
+		onRemove?: (() => void)|null;
+	}
+
+	let { id, onChange, onRemove = null }: Props = $props();
 </script>
 
 <div class="row">
@@ -29,7 +33,8 @@
 	{#if onRemove}
 		<button
 			class="remove-button transparent-button"
-			on:click={onRemove}
+			aria-label="Remove ID"
+			onclick={onRemove}
 		>
 		</button>
 	{/if}

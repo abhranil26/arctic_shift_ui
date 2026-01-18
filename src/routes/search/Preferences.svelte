@@ -36,22 +36,4 @@
 		padding: 1rem;
 		font-size: 1.2rem;
 	}
-
-	.row {
-		display: flex;
-		flex-direction: row;
-		@media (max-width: 600px) {
-			flex-direction: column;
-		}
-		gap: .5rem;
-		width: 100%;
-	
-		> :global(*) {
-			flex: 1;
-		}
-	}
-
-	.gap {
-		height: 1rem;
-	}
 </style>
