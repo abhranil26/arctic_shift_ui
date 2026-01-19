@@ -7,6 +7,10 @@
 	margin: 1rem auto;
 	padding: 1rem;
 
+	@media (max-width: 500px) {
+		margin: 0;
+	}
+
 	.charts-wrapper {
 		display: flex;
 		flex-direction: column;

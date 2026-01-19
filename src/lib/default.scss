@@ -61,6 +61,11 @@ blockquote {
 	margin: .5rem 0 .5rem 0.5rem;
 }
 
+.md {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
 .md-spoiler-text {
 	background: var(--text-color);
 	transition: background-color .5s ease;
@@ -141,9 +146,9 @@ a {
   text-decoration: none;
   filter: brightness(1.0);
   transition: filter .2s ease;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
+  // text-overflow: ellipsis;
+  // white-space: nowrap;
+  // overflow: hidden;
 
   &:hover {
     filter: brightness(1.1);
@@ -226,6 +231,9 @@ td code {
   background: var(--bg-el1-color);
   border: 1px solid var(--border-color);
   border-radius: 1rem;
+	@media (max-width: 500px) {
+    border-radius: 0;
+	}
 }
 
 .home-button {

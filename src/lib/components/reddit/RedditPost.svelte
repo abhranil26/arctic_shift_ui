@@ -4,28 +4,33 @@
     import ContextMenuButton from "../contextMenu/ContextMenuButton.svelte";
     import { type ContextMenuItem } from "../contextMenu/contextMenuTypes";
 	import DateDisplay from "../DateDisplay.svelte";
+	import PresetSvg from "../icons/PresetSvg.svelte";
+	import ContentLinkButtons from "./ContentLinkButtons.svelte";
 	import RedditImagePreview from "./RedditImagePreview.svelte";
 
 	interface Props {
 		data: RedditPostData;
-		contextMenuItems: ContextMenuItem[];
+		contextMenuItems?: ContextMenuItem[];
+		embedded?: boolean;
 	}
 
-	let { data, contextMenuItems }: Props = $props();
+	let { data, contextMenuItems, embedded = false }: Props = $props();
 </script>
 
-<div class="pane">
+<div class:pane={!embedded} class="post-container">
 	<div class="header">
 		<a href={`https://reddit.com/r/${data.subreddit}`} target="_blank">r/{data.subreddit} </a>
 		<span>by </span>
 		<a href={`https://reddit.com/u/${data.author}`} target="_blank">u/{data.author} </a>
 		<span><DateDisplay date={new Date(data.created_utc * 1000)} /></span>
 		<span> | </span>
-		<span>{data.score} 🠉</span>
+		<span class="score">{data.score}</span> <PresetSvg name="upvote" size={14} />
 		<span> | </span>
-		<span>{data.num_comments} 🗨️</span>
+		<span>{data.num_comments}</span> <PresetSvg name="comment" size={14} />
 		<div class="spacer"></div>
-		<ContextMenuButton items={contextMenuItems} />
+		{#if contextMenuItems && contextMenuItems.length > 0}
+			<ContextMenuButton items={contextMenuItems} />
+		{/if}
 	</div>
 	<div class="title long-text">{data.title}</div>
 	{#if data.url && !data.url.endsWith(data.permalink)}
@@ -41,10 +46,7 @@
 			{@html data.selftext_html}
 		</div>
 	{/if}
-	<div class="reddit-link">
-		<span>Source link:&nbsp;</span>
-		<a href={`https://reddit.com${data.permalink}`} target="_blank" class="long-url">{`https://reddit.com${data.permalink}`}</a>
-	</div>
+	<ContentLinkButtons redditPermalink={data.permalink} archiveId={`t3_${data.id}`} />
 </div>
 
 <style lang="scss">
@@ -67,17 +69,6 @@
 		font-size: 1.5rem;
 		margin-top: 0.5rem;
 		margin-bottom: 0.5rem;
-	}
-
-	.reddit-link {
-		display: flex;
-		flex-direction: row;
-		margin-top: 0.5rem;
-
-		> * {
-			white-space: nowrap;
-			font-size: 0.8rem;
-		}
 	}
 
 	.selftext {

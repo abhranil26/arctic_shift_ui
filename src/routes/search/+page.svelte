@@ -1,18 +1,15 @@
 <script lang="ts">
-	import { onMount } from "svelte";
+	import { onMount, tick } from "svelte";
 	import "$lib/default.scss";
 	import TextField from "$lib/components/TextField.svelte";
 	import OptionSelector from "$lib/components/OptionSelector.svelte";
 	import type { RedditCommentData, RedditPostData } from "$lib/redditTypes";
-	import RedditPost from "$lib/components/reddit/RedditPost.svelte";
-	import RedditComment from "$lib/components/reddit/RedditComment.svelte";
+	import RedditThread from "$lib/components/reddit/RedditThread.svelte";
 	import homeSvg from "$lib/images/home.svg";
 	import settingsSvg from "$lib/images/settings.svg";
 	import Preferences from "./Preferences.svelte"
     import IdInputField from "./IdInputField.svelte";
     import { IdCategory, IdInput } from "./IdInput";
-    import { type ContextMenuItem } from "$lib/components/contextMenu/contextMenuTypes";
-    import { copyToClipboard } from "$lib/utils";
     import { TextMessages } from "./textMessages";
     import { apiUrl } from "$lib/const";
     import { replaceState } from "$app/navigation";
@@ -91,33 +88,10 @@
 			const idsArray = IdInput.fromIdStrings(idsStr);
 			ids = idsArray.filter(id => id !== null);
 		}
-	});
 
-	function resetAllFiltersFor(funToReset: Function) {
-		if (funToReset === Function.PostsSearch || funToReset === Function.CommentsSearch) {
-			subreddit = "";
-			author = "";
-			after = "";
-			before = "";
-			limit = "10";
-			sort = "desc";
-		}
-		if (funToReset === Function.PostsSearch) {
-			over18 = null;
-			spoiler = null;
-			title = "";
-			selftext = "";
-			url = "";
-		}
-		if (funToReset === Function.CommentsSearch) {
-			linkId = "";
-			parentId = "";
-			body = "";
-		}
-		if (funToReset === Function.Ids) {
-			ids = [new IdInput(IdCategory.post, "")];
-		}
-	}
+		if (params.get("fun"))
+			tick().then(() => search());
+	});
 
 	function verifyLimit(limitStr: string): string|null {
 		if (limitStr.length == 0)
@@ -363,70 +337,6 @@
 			}
 		});
 	}
-
-	function getPostContextMenuItems(data: RedditPostData): ContextMenuItem[] {
-		const items: ContextMenuItem[] = [];
-		const permalink = `https://www.reddit.com${data.permalink}`;
-		items.push({
-			label: "Copy reddit post URL",
-			onClick: () => copyToClipboard(permalink),
-		});
-		if (data.url !== permalink) {
-			items.push({
-				label: "Copy post link",
-				onClick: () => copyToClipboard(data.url),
-			});
-		}
-		items.push({
-			label: "View all comments",
-			onClick: () => {
-				resetAllFiltersFor(Function.CommentsSearch);
-				fun = Function.CommentsSearch;
-				linkId = data.id;
-				search();
-			},
-		});
-		return items;
-	}
-
-	function getCommentContextMenuItems(data: RedditCommentData): ContextMenuItem[] {
-		const items: ContextMenuItem[] = [];
-		const permalink = `https://www.reddit.com${data.permalink}`;
-		items.push({
-			label: "Copy comment URL",
-			onClick: () => copyToClipboard(permalink),
-		});
-		items.push({
-			label: "View parent post",
-			onClick: () => {
-				resetAllFiltersFor(Function.Ids);
-				fun = Function.Ids;
-				ids = [new IdInput(IdCategory.post, data.link_id)];
-				search();
-			},
-		});
-		if (data.parent_id && data.parent_id !== data.link_id) {
-			items.push({
-				label: "View parent comment",
-				onClick: () => {
-					resetAllFiltersFor(Function.Ids);
-					fun = Function.Ids;
-					ids = [new IdInput(IdCategory.comment, data.parent_id)];
-					search();
-				},
-			});
-		}
-		items.push({
-			label: "View child comments",
-			onClick: () => {
-				resetAllFiltersFor(Function.CommentsSearch);
-				fun = Function.CommentsSearch;
-				parentId = data.id;
-				search();
-			},
-		});
-		return items;
-	}
 </script>
 
 <svelte:head>
@@ -656,14 +566,14 @@
 				<p>{TextMessages.nothingFound}</p>
 			{/if}
 			{#each posts as post (post.id)}
-				<RedditPost data={post} contextMenuItems={getPostContextMenuItems(post)} />
+				<RedditThread initialPost={post} />
 			{/each}
 		{:else if fun === Function.CommentsSearch && comments !== null}
 			{#if comments.length == 0}
 				<p>{TextMessages.nothingFound}</p>
 			{/if}
 			{#each comments as comment (comment.id)}
-				<RedditComment data={comment} contextMenuItems={getCommentContextMenuItems(comment)} />
+				<RedditThread initialComment={comment} />
 			{/each}
 		{:else if fun === Function.Ids && idResults !== null}
 			{#if idResults.length == 0}
@@ -671,9 +581,9 @@
 			{/if}
 			{#each idResults as thing (thing.id)}
 				{#if "title" in thing}
-					<RedditPost data={thing} contextMenuItems={getPostContextMenuItems(thing)} />
+					<RedditThread initialPost={thing} />
 				{:else if "body" in thing}
-					<RedditComment data={thing} contextMenuItems={getCommentContextMenuItems(thing)} />
+					<RedditThread initialComment={thing} />
 				{:else}
 					<p>Unknown type</p>
 				{/if}
@@ -706,6 +616,10 @@
 		margin: 1rem auto;
 		padding: 1rem;
 		font-size: 1.2rem;
+		@media (max-width: 500px) {
+			margin: 0;
+			padding: 0;
+		}
 	}
 
 	.parameters {
