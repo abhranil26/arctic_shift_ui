@@ -22,6 +22,27 @@
 		?? data.secure_media?.reddit_video?.fallback_url
 		?? null
 	);
+
+	let galleryUrls = $derived.by(() => {
+		if (!data.media_metadata) return [];
+		const mimeToExt: Record<string, string> = {
+			'image/jpg': '.jpg', 'image/jpeg': '.jpg', 'image/png': '.png',
+			'image/gif': '.gif', 'image/webp': '.webp',
+		};
+		const items = data.gallery_data?.items;
+		const ids = items
+			? items.map(item => item.media_id)
+			: Object.keys(data.media_metadata);
+		return ids
+			.map(id => {
+				const entry = data.media_metadata[id];
+				if (!entry || entry.status !== 'valid') return null;
+				const ext = mimeToExt[entry.m];
+				if (ext) return `https://i.redd.it/${id}${ext}`;
+				return entry.s?.gif ?? entry.s?.u ?? null;
+			})
+			.filter((url): url is string => url !== null);
+	});
 </script>
 
 <div class:pane={!embedded} class="post-container">
@@ -52,6 +73,16 @@
 		<div class="url-row">
 			<span class="fallback-label">Video:</span>
 			<a href={fallbackUrl} class="url long-url" target="_blank">{fallbackUrl}</a>
+		</div>
+	{/if}
+	{#if galleryUrls.length > 0}
+		<div class="gallery-urls">
+			<span class="fallback-label">Gallery ({galleryUrls.length}):</span>
+			{#each galleryUrls as url}
+				<div class="url-row">
+					<a href={url} class="url long-url" target="_blank">{url}</a>
+				</div>
+			{/each}
 		</div>
 	{/if}
 	{#if data.selftext}
@@ -108,6 +139,16 @@
 		color: var(--text-secondary, #888);
 		margin-right: 0.25rem;
 		white-space: nowrap;
+	}
+
+	.gallery-urls {
+		margin-top: 0.5rem;
+		margin-bottom: 0.5rem;
+
+		.url-row {
+			margin-top: 0.15rem;
+			margin-bottom: 0.15rem;
+		}
 	}
 
 	.long-url {
