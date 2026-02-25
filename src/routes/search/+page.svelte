@@ -665,6 +665,7 @@
 		line-height: 2.5rem;
 		padding: 0 1rem;
 		background: var(--bg-el2-color);
+		color: var(--text-color);
 		border: 1px solid var(--border-color);
 		border-radius: 2rem;
 		font-size: 1.2rem;
@@ -709,6 +710,7 @@
 		img {
 			width: 1.5rem;
 			height: 1.5rem;
+			filter: var(--home-icon-filter, none);
 		}
 	}
 
