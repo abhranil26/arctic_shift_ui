@@ -104,7 +104,6 @@
 			position: relative;
 
 			input {
-				color-scheme: dark;
 				width: 100%;
 			}
 		}

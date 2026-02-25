@@ -46,6 +46,10 @@
 		transform: translateX(0);
 		transition: transform .5s ease, filter .2s ease;
 
+		img {
+			filter: var(--github-logo-filter, none);
+		}
+
 		img + span {
 			font-size: 2rem;
 			transform: translateY(.3rem);

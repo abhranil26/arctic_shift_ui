@@ -7,6 +7,11 @@ export enum DateDisplay {
 	relative = "relative",
 }
 
+export enum Theme {
+	dark = "dark",
+	light = "light",
+}
+
 const storage: any = browser ? localStorage : {};
 
 function loadFormLocalStorage<T>(key: string, defaultValue: T) {
@@ -39,3 +44,4 @@ function makeSavableStore<T>(key: string, defaultValue: T) {
 
 export const dateDisplay = makeSavableStore<DateDisplay>("dateDisplay", DateDisplay.utc);
 export const blurNsfw = makeSavableStore<boolean>("blurNsfw", true);
+export const theme = makeSavableStore<Theme>("theme", Theme.dark);

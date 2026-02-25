@@ -1,7 +1,7 @@
 <script lang="ts">
 	import "$lib/default.scss";
 	import OptionSelector from "$lib/components/OptionSelector.svelte";
-	import { blurNsfw, dateDisplay, DateDisplay } from "$lib/components/searchPreferences";
+	import { blurNsfw, dateDisplay, DateDisplay, theme, Theme } from "$lib/components/searchPreferences";
 </script>
 
 <div class="preferences pane">
@@ -22,6 +22,15 @@
 		]}
 		label="Blur NSFW images"
 		bind:selected={$blurNsfw}
+		column={false}
+	/>
+	<OptionSelector
+		options={[
+			{ value: Theme.dark, label: "Dark" },
+			{ value: Theme.light, label: "Light" }
+		]}
+		label="Theme"
+		bind:selected={$theme}
 		column={false}
 	/>
 </div>
