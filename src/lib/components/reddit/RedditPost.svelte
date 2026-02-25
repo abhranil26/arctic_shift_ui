@@ -15,6 +15,13 @@
 	}
 
 	let { data, contextMenuItems, embedded = false }: Props = $props();
+
+	let fallbackUrl = $derived(
+		data.media?.reddit_video?.fallback_url
+		?? data.preview?.reddit_video_preview?.fallback_url
+		?? data.secure_media?.reddit_video?.fallback_url
+		?? null
+	);
 </script>
 
 <div class:pane={!embedded} class="post-container">
@@ -39,6 +46,12 @@
 			{#if data.preview}
 				<RedditImagePreview data={data} />
 			{/if}
+		</div>
+	{/if}
+	{#if fallbackUrl}
+		<div class="url-row">
+			<span class="fallback-label">Video:</span>
+			<a href={fallbackUrl} class="url long-url" target="_blank">{fallbackUrl}</a>
 		</div>
 	{/if}
 	{#if data.selftext}
@@ -89,6 +102,12 @@
 			text-overflow: ellipsis;
 			white-space: nowrap;
 		}
+	}
+
+	.fallback-label {
+		color: var(--text-secondary, #888);
+		margin-right: 0.25rem;
+		white-space: nowrap;
 	}
 
 	.long-url {
