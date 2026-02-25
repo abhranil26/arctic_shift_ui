@@ -240,6 +240,7 @@ td code {
   img {
     width: 2rem;
     height: 2rem;
+    filter: var(--home-icon-filter, none);
   }
 }
 
@@ -310,7 +311,8 @@ td code {
   &.theme-override.theme-light {
     --bg-color: #ffffff;
     --bg-el1-color: var(--bg-color);
-    --bg-el2-color: #f1f1f1;
+    --bg-el2-color: #eaeaea;
+    --border-color: rgb(128 128 128 / 35%);
     --text-color: #2c2c2c;
     --text-on-primary: white;
     --primary-contrast: #f57272;
@@ -325,9 +327,9 @@ td code {
     --primary-faint: #875e5e;
     --primary-transparent: #f07f7f80;
     --link-color: #5589ff;
-    --switcher-bg-hover: #ebebeb;
-    --switcher-bg-active: #dcdcdc;
-    --switcher-bg-selected: #c4c4c4;
+    --switcher-bg-hover: #e0e0e0;
+    --switcher-bg-active: #d0d0d0;
+    --switcher-bg-selected: #b8b8b8;
     --divider-color: var(--border-color);
     --user-admin-bg: darkred;
     --user-admin-color: #cf0808;
@@ -360,6 +362,7 @@ td code {
     --fab-root-filter-active: grayscale(1) brightness(1) opacity(0.5);
     --fab-root-shadow: #00000026;
     --github-logo-filter: invert(1);
+    --home-icon-filter: invert(1) brightness(0.2);
   }
 }
 
